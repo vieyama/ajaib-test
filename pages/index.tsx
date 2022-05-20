@@ -2,16 +2,16 @@ import { Breadcrumb, Button, Col, Form, Row, Select } from "antd";
 import type { NextPage } from "next";
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
-import { Input, Space } from "antd";
+import { Input } from "antd";
 import qs from "qs";
 import { Table } from "antd";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 
 const columns = [
   {
     title: "Username",
-    dataIndex: ["login", "username"],
+    dataIndex: "username",
     sorter: true,
     width: "20%",
   },
@@ -19,7 +19,6 @@ const columns = [
     title: "Name",
     dataIndex: "name",
     sorter: true,
-    render: (name: { first: any; last: any }) => `${name.first} ${name.last}`,
     width: "20%",
   },
   {
@@ -36,9 +35,7 @@ const columns = [
   {
     title: "Registered Date",
     dataIndex: "registered",
-    render: (e: {
-      date: string | number | Date | dayjs.Dayjs | null | undefined;
-    }) => dayjs(e?.date).format("DD-MM-YYYY HH:mm"),
+    render: (e: any) => dayjs(e).format("DD-MM-YYYY HH:mm"),
     sorter: true,
   },
 ];
@@ -67,7 +64,17 @@ const Home: NextPage = () => {
       .then((res) => res.json())
       .then((data) => {
         setLoading(false);
-        setDataSource(data?.results);
+        setDataSource(
+          data?.results.map((item: any) => ({
+            login: item?.login,
+            name: `${item?.name.first} ${item?.name.last}`,
+            username: item?.login?.username,
+            email: item?.email,
+
+            gender: item?.gender,
+            registered: item?.registered?.date,
+          }))
+        );
         setPagination({
           ...params.pagination,
           total: 100,
@@ -80,17 +87,37 @@ const Home: NextPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const sortingFunction = (sorter: any) => {
+    dataSource.sort((a: any, b: any) => {
+      return sorter?.order === "ascend"
+        ? ("" + a?.[sorter?.field]).localeCompare(b?.[sorter?.field])
+        : ("" + b?.[sorter?.field]).localeCompare(a?.[sorter?.field]);
+    });
+  };
+
   const handleTableChange: any = (
     pagination: any,
     filters: any,
     sorter: { field: any; order: any }
   ) => {
+    if (sorter?.order) {
+      return sortingFunction(sorter);
+    }
+
     getData({
-      sortField: sorter.field,
-      sortOrder: sorter.order,
       pagination,
       ...filters,
     });
+  };
+
+  const handleReset = () => {
+    getData({
+      pagination: {
+        current: 1,
+        pageSize: 10,
+      },
+    });
+    form.resetFields();
   };
 
   return (
@@ -148,19 +175,7 @@ const Home: NextPage = () => {
                 </Select>
               </Form.Item>
               <Form.Item>
-                <Button
-                  onClick={() => {
-                    getData({
-                      pagination: {
-                        current: 1,
-                        pageSize: 10,
-                      },
-                    });
-                    form.resetFields()
-                  }}
-                >
-                  Reset Filter
-                </Button>
+                <Button onClick={handleReset}>Reset Filter</Button>
               </Form.Item>
             </Form>
             <Table
