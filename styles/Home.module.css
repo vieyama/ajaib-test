@@ -1,0 +1,19 @@
+.container {
+  padding: 0 2rem;
+}
+
+.main {
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+.wrapper {
+  margin-top: 3rem;
+}
+
+.filter {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  margin: 3rem 0;
+}
